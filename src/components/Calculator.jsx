@@ -3,16 +3,27 @@ import { FaDiscord, FaTwitter } from "react-icons/fa";
 import { AiFillGithub } from "react-icons/ai";
 import { Link } from "react-router-dom";
 import axios from "axios";
+// import Staking from "./Staking";
+import Select from "react-select";
+import countries from "../utils/countries.json";
+
+import Nav from "react-bootstrap/Nav";
 
 import { useInterval } from "../utils/hooks";
+
+const coinOptions = [
+	{ value: "polkadot", label: "Polkadot" },
+	{ value: "kusama", label: "Kusama" },
+];
 
 const Calculator = () => {
 	const [currency, setCurrency] = useState("");
 	const [coinId, setCoinId] = useState("");
 	const [countryData, setCountryData] = useState([{ name: "", flag: "" }]);
 	const [price, setPrice] = useState("");
+	const [prices, setPrices] = useState("");
 	const [tCoun, setTCoun] = useState(0);
-	const [refresh,setRefresh] = useState("");
+	const [refresh, setRefresh] = useState("");
 	const [country, setCountry] = useState("");
 
 	useEffect(() => {
@@ -30,7 +41,7 @@ const Calculator = () => {
 
 	const getCurrency = async () => {
 		const res = await axios.post(
-			"https://countriesnow.space/api/v0.1/countries/currency",
+			"https://cdn.jsdelivr.net/gh/fawazahmed0/currency-api@1/latest/currencies/${from}.json",
 			{
 				country: currency,
 			}
@@ -48,13 +59,21 @@ const Calculator = () => {
 		console.log(data);
 		setPrice(data);
 		console.log("called price", data);
-		// set [price] --- UI
-		// return res.data.kusama.inr
-		// same api for refresh (same api line number 40)
-		// How are you. Kumar! f ine fine bro .okay. so i will work this project so litte rest work so complete then start my class okay. yeah, okay. okay 
+	};
 
-		// remove hard 'inr' in URL
-		// select currency (pop up) and update local currency ( call api )
+	const polkadotPrices = async () => {
+		console.warn("fetch polkadot price");
+		try {
+			const res = await axios.get(
+				`https://api.coingecko.com/api/v3/coins/polkadot?tickers=true&market_data=true`
+			);
+			const data = res.data.polkadot;
+			console.log(data);
+			setPrices(data);
+			console.log("called price", data);
+		} catch (e) {
+			console.warn("polkadot price", e);
+		}
 	};
 
 	const kusamaRefresh = async () => {
@@ -77,10 +96,12 @@ const Calculator = () => {
 		getCountries();
 		getCurrency();
 		kusamaPrice();
+		polkadotPrices();
 	}, []);
 
 	useInterval(() => {
 		kusamaPrice();
+		polkadotPrices();
 		kusamaRefresh();
 	}, 20000);
 
@@ -97,13 +118,13 @@ const Calculator = () => {
 					</Link>
 				</li>
 				<li>
-					<Link to="/staking" className="pl-3">
+					<Nav.Link href="/Staking" className="pl-3">
 						Staking
-					</Link>
+					</Nav.Link>
 				</li>
 				<li>
-					<Link to="/pool" className="pl-3">
-						Pool
+					<Link to="/	EMA30" className="pl-3">
+						EMA30
 					</Link>
 				</li>
 				<li>
@@ -130,10 +151,27 @@ const Calculator = () => {
 				</Link>
 			</div>
 
-			<h3>Kusama Current Price: </h3>
+			<h3> Current Coin Price: </h3>
 
 			<div>
-				<h4 className="text-xl font-semibold"> 1 Kusama = ${price}</h4>
+				{/* <select className="bg-black">
+					<option
+						selected
+						className="text-xl font-semibold"
+						value="Kusama"
+					>
+						{" "}
+						1 Kusama = ${price}
+					</option>
+					<option
+						className="text-xl font-semibold bg-red-500"
+						value="Polkadot"
+					>
+						1 Polkadot = ${prices}
+					</option>
+				</select> */}
+				<Select options={coinOptions} />
+				{/* <h4 className="text-xl font-semibold"> 1 Kusama = ${price}</h4> */}
 				{/* links */}
 				<div className="flex items-center justify-between">
 					<h3 className="text-blue-600 font-semibold text-base underline">
@@ -154,7 +192,7 @@ const Calculator = () => {
 
 				{/* text box */}
 				<div className="flex flex-col space-y-2 ">
-					<label htmlFor="kusama">Kusama</label>
+					<label htmlFor="kusama"></label>
 					<input
 						className="bg-gray-700 text-gray-50 py-1 px-2 border border-gray-50 outline-none"
 						type="text"
@@ -178,19 +216,12 @@ const Calculator = () => {
 				{/* select */}
 				{/* we'll map through a list of countries and also their maps.*/}
 				<label htmlFor="currency">Select Currency</label>
-				<select
-					name="currency"
-					id="currency"
-					onChange={(e) => setCountry(e.target.value)}
-					className="bg-gray-700 mt-1 p-2 outline-none text-gray-50 w-full"
-				>
-					{countryData.map((country, index) => (
-						<option value={country.name} key={index}>
-							{country.name}
-							{/* <img src={country.flag} alt={country.name} /> */}
-						</option>
-					))}
-				</select>
+				<Select
+					options={countries.map((item) => ({
+						value: item.currency.code,
+						label: `${item.currency.code} - ${item.currency.name}`,
+					}))}
+				/>
 			</div>
 		</div>
 	);
